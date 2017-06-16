@@ -1,5 +1,5 @@
 theme = "hyde"
-baseURL = "http://andrebir.es"
+baseURL = "http://andrebir.es/"
 languageCode = "en-us"
 title = "Blog de André Bires"
 publishDir = "docs"
