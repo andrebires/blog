@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-us" lang="en-us">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="generator" content="Hugo 0.23" />
+
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+  
+  <title>Blog de André Bires</title>
+  
+
+  
+  <link rel="stylesheet" href="http://andrebir.escss/poole.css">
+  <link rel="stylesheet" href="http://andrebir.escss/syntax.css">
+  <link rel="stylesheet" href="http://andrebir.escss/hyde.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700|Abril+Fatface">
+
+  
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144-precomposed.png">
+  <link rel="shortcut icon" href="/favicon.png">
+
+  
+  <link href="http://andrebir.es/index.xml" rel="alternate" type="application/rss+xml" title="Blog de André Bires" />
+</head>
+
+<body class=" ">
+
+<div class="sidebar">
+  <div class="container sidebar-sticky">
+    <div class="sidebar-about">
+      <a href="http://andrebir.es"><h1>Blog de André Bires</h1></a>
+      <p class="lead">
+       Aprendendo e compartilhando ideias sobre desenvolvimento de software 
+      </p>
+    </div>
+
+    <ul class="sidebar-nav">
+      <li><a href="/">Home</a> </li>
+      
+    </ul>
+
+    <p>&copy; 2017. All rights reserved. </p>
+  </div>
+</div>
+
+
+    <div class="content container">
+<div class="posts">
+
+      
+  <div class="post">
+    <h1 class="post-title">
+      <a href="http://andrebir.es/textc/">
+        Construíndo um bot assistente virtual utilizando o Textc
+      </a>
+    </h1>
+
+    <span class="post-date">Fri, Apr 6, 2012</span>
+
+    
+
+<p>Os bots de mensagem - ou <strong>chatbots</strong> - são programas que permitem a interação através de mensagens para oferecer algum tipo de serviço. Apesar de não ser uma tecnologia nova, vem ganhando destaque nas notícias desde que o Facebook, Microsoft e outras empresas anunciaram investimentos em plataformas para construção deste tipo de aplicação. Um dos principais argumentos para o uso dos bots é que o modelo de <strong>distribuição de serviços através de aplicativos móveis está saturado</strong>. Existe uma resistência por parte dos usuários de instalar novos aplicativos para uso de serviços simples. Por exemplo, imagine que se cada pizzaria de sua cidade oferecesse um aplicativo para realizar o pedido de pizza, você precisaria ter aplicativos diferentes para pedir pizza em lugares variados. Mas e se você não precisasse instalar nenhum aplicativo novo e <strong>utilizar os próprios aplicativos de mensagem que você (provavelmente) já possui para este fim</strong>? É esta oportunidade que Facebook, Microsoft, Google, Slack e outras grandes empresas estão tentando explorar. <img src="https://andrebires.files.wordpress.com/2016/10/bots1.png" alt="bots1" /> Oferecer uma interface amigável aos usuários de bots é um grande desafio, já que a forma de entrada padrão disponível é o texto - uma interface sem estrutura. Afinal, <strong>não há garantia do que o usuário vai escrever</strong>, nem da forma, gramática, sintaxe, etc. Existem soluções para tentar contornar esta limitação - como o uso de botões nos canais de mensagem (como Telegram e Messenger) que conduzem a navegação do usuário ou inteligência artificial para tentar &ldquo;adivinhar&rdquo; o que o usuário está querendo dizer. Cada uma tem seus prós e contras e neste artigo iremos demonstrar como fazer isso utilizando a <strong>biblioteca de processamento de linguagem natural <a href="https://github.com/takenet/textc-csharp">Textc</a></strong>. A biblioteca está disponível para C# e pode ser instalada através do <a href="https://www.nuget.org/packages/Takenet.Textc">Nuget</a>. De maneira resumida, a <strong>Textc permite definir de sintaxes de texto e associá-las a chamadas de métodos de uma classe</strong>. Uma sintaxe define uma estrutura de texto, com tokens e seus tipos, sendo cada token mapeado a parâmetros de um método. Para ilustrar iremos construir um <strong>assistente virtual que permite o armazenamento de lembretes</strong>, de forma semelhante ao que o Google Now oferece.</p>
+
+<h2 id="desenhando-a-conversa">Desenhando a conversa</h2>
+
+<p>O primeiro passo é enumerar as diferentes formas que o usuário poderá interagir com seu bot. Alguns exemplos:</p>
+
+<ol>
+<li><em>Lembrar de ir ao médico</em></li>
+<li><em>Lembre me amanhã de pagar a conta de luz</em></li>
+<li><em>Me lembre de fazer compras hoje a tarde</em></li>
+</ol>
+
+<p>São estruturas de texto diferentes mas que possuem informações parecidas:
+- O <strong>comando</strong> para adicionar um lembrete: <em>Lembrar de, Lembre me, Me lembre de</em>
+- O <strong>texto</strong> do lembrete: <em>ir ao médico, pagar a conta de luz, fazer compras</em>
+- A <strong>data</strong> do lembrete: <em>amanhã, hoje</em>
+- A <strong>hora</strong> do lembrete: <em>a tarde</em></p>
+
+<p>No Textc, estas informações são mapeadas em um ou mais <strong>tokens</strong>, sendo que o conjunto de tokens em uma sentença é chamado de <strong>sintaxe</strong>. Isolando as informações presentes nos exemplos acima, temos:
+1. (lembrar de) (ir ao médico)
+2. (Lembre me) (amanhã de) (pagar a conta de luz)
+3. (Me lembre de) (fazer compras) (hoje) (a tarde)</p>
+
+<p>Para atendermos a estas sintaxes, precisaremos de implementar em nosso calendário <strong>três comandos</strong> diferentes:
+1. Adicionar novo lembrete
+2. Adicionar novo lembrete para uma data
+3. Adicionar novo lembrete para um data e uma hora Cada comando deverá ser <strong>mapeado a um método diferente</strong> em uma classe, como veremos mais a frente. Em nosso exemplo, teremos apenas uma sintaxe associada por comando, mas é possível ter várias sintaxes diferentes para cada um. Para representarmos as sintaxes e seus tokens, utilizaremos a CSDL - <em>Command Syntax Definition Language</em> - uma notação simples oferecida pela biblioteca. Uma declaração CSDL é constituída de uma ou mais definições de tokens, sendo cada uma representada da seguinte forma:</p>
+
+<pre><code>name:Type(initializer) 
+</code></pre>
+
+<p>Onde: - <strong>name</strong> - O nome do token que será extraido da entrada. Este valor pode ser utilizado no mapeamento com os parâmetros do método de uma classe. Opcional. - <strong>type</strong> - O tipo do token no texto. A biblioteca define alguns tipos como <code>Word</code> (uma palavra), <code>Text</code> (uma ou mais palavras) e <code>Integer</code> (número inteiro). Obrigatório. - <strong>initializer</strong> - Valor de inicialização, sendo utilizado para limitar os valores válidos para o tipo. Por exemplo, no tipo <code>Word</code>, determina quais são as palavras válidas para serem consideradas na entrada do usuário. Opcional. Sendo assim, podemos representar a primeira sintaxe da seguinte forma:</p>
+
+<pre><code>:Word(lembrar) :Word?(de) reminder:Text 
+</code></pre>
+
+<p><strong>Não é necessário nomear tokens que não carreguem informações relevantes</strong> para o processamento do comando, como os dois primeiros desta sintaxe. O importante aqui é só o valor de <em>reminder</em>, que é o texto do lembrete. Além disso, alguns tokens podem ser marcados como <strong>opcionais</strong> em uma sintaxe, bastando incluir um ponto-de-interrogação depois da declaração do tipo - como fizemos na preposição &ldquo;<em>de&rdquo;</em> acima. Neste caso, a sintaxe é válida para entradas como <em>lembrar de ir ao médico</em> ou <em>lembrar médico</em>. A sintaxe do segundo comando é semelhante a primeira, com uma informação adicional - a data do lembrete. Ela também inclui outros tokens que não estão presentes na primeira mas que apenas constituem a estrutura do texto. Representando-a com CSDL, temos:</p>
+
+<pre><code>:Word(lembre) :Word?(me) date:Word?(hoje,amanha,eventualmente) :Word?(de) reminder:Text 
+</code></pre>
+
+<p>Por fim, precisamos configurar a terceira sintaxe, que a princípio parece simples:</p>
+
+<pre><code>:Word?(me) :Word(lembre) :Word(de) reminder:Text date:Word?(hoje,amanha,eventualmente) :Word?(a) time:Word?(manha,tarde,noite) 
+</code></pre>
+
+<p>Só que existe uma pegadinha: por padrão, o processamento ocorre da <strong>esquerda para a direita</strong> e quando alcançado, o token <strong>reminder</strong> do tipo <strong>Text</strong> irá capturar todo o restante da entrada do usuário, e nunca teríamos <em>match</em> dos demais tokens à direita do mesmo (<em>date</em> e <em>time</em>). Isso acontece porque o tipo de token <strong>Text</strong> é <strong>guloso</strong> ou seja, consome todo o restante da entrada do usuário. Por este motivo, ele deve ser o último token a ser processado em uma sintaxe. Para isso, podemos <strong>alterar a direção de parse</strong> em qualquer ponto da sintaxe ao incluirmos o modificador <strong>~</strong> (til) após o tipo de um token. Como precisamos que o token <strong>reminder</strong> seja o último a ser processado, a direção de parse deve mudar após o processamento do token imediatamente a esquerda deste - no caso a palavra <em>de</em>. Neste caso, teríamos:</p>
+
+<pre><code>:Word?(me) :Word(lembre) :Word~(de) reminder:Text date:Word?(hoje,amanha,eventualmente) :Word?(a) time:Word?(manha,tarde,noite) 
+</code></pre>
+
+<p>Assim, logo após o <em>match</em> da palavra <em>de</em>, o parse continuará a partir do final da sintaxe, buscando no final da entrada o valor do token <em>time</em>.</p>
+
+<h2 id="fazendo-funcionar">Fazendo funcionar</h2>
+
+<p>Para atendermos aos comandos definidos acima, criaremos uma classe <code>Calendar</code> com três métodos - uma para cada comando - como a seguir:</p>
+
+<pre><code class="language-csharp">public class Calendar 
+{ 
+    public Task AddReminderAsync(string reminder) =&gt; AddReminderForDateAsync(reminder, &quot;eventualmente&quot;); 
+    
+    public Task AddReminderForDateAsync(string reminder, string date) =&gt; AddReminderForDateAndTimeAsync(reminder, date, &quot;manhã&quot;); 
+    
+    public async Task AddReminderForDateAndTimeAsync(string reminder, string date, string time) 
+    { 
+        // TODO: Store the reminder for the specified date/time 
+        return $&quot;O lembrete '{reminder}' foi adicionado para {date} no período da {time}&quot;; 
+    } 
+} 
+</code></pre>
+
+<p>Por último, precisamos realizar o <em>bind</em> das sintaxes com os comandos, que pode ser feito da seguinte forma:</p>
+
+<pre><code class="language-csharp">
+// Initializamos e realizamos o parse das sintaxes
+var syntax1 = CsdlParser.Parse( &quot;:Word(lembrar) :Word?(de) reminder:Text&quot;); 
+var syntax2 = CsdlParser.Parse( &quot;:Word(lembre) :Word?(me) date:Word?(hoje,amanha,eventualmente) :Word?(de) reminder:Text&quot;); 
+var syntax3 = CsdlParser.Parse( &quot;:Word?(me) :Word(lembre) :Word~(de) reminder:Text date:Word?(hoje,amanha,eventualmente) :Word?(a) time:Word?(manha,tarde,noite)&quot;); 
+
+// Incluimos um OutputProcessor para dar saída à resposta dos métodos no Console 
+var addReminderOutputProcessor = new DelegateOutputProcessor( (text, context) =&gt; Console.WriteLine(text)); 
+
+// Instanciamos a nossa classe 
+var calendar = new Calendar(); 
+
+// Definimos os CommandProcessors, um para cada método 
+var commandProcessor1 = new ReflectionCommandProcessor( 
+    calendar, nameof(AddReminderAsync), true, addReminderOutputProcessor, syntax1); 
+    var commandProcessor2 = new ReflectionCommandProcessor( calendar, nameof(AddReminderForDateAsync), true, addReminderOutputProcessor, syntax2); var commandProcessor3 = new ReflectionCommandProcessor( calendar, nameof(AddReminderForDateAndTimeAsync), true, addReminderOutputProcessor, syntax3); 
+    
+    // Criamos o TextProcessor onde os CommandProcessors estarão registrados 
+    var textProcessor = new TextProcessor(); 
+    textProcessor.CommandProcessors.Add(commandProcessor1); 
+    textProcessor.CommandProcessors.Add(commandProcessor2); 
+    textProcessor.CommandProcessors.Add(commandProcessor3); 
+    // Por último, incluímos alguns PreProcessors para normalizar a entrada 
+    textProcessor.TextPreprocessors.Add(new TextNormalizerPreprocessor());
+    textProcessor.TextPreprocessors.Add(new ToLowerCasePreprocessor()); 
+</code></pre>
+
+<p>E é isso, seu bot já esta pronto para funcionar como um assistente virtual básico:</p>
+
+<pre><code class="language-csharp">try 
+{ 
+    var inputText = Console.ReadLine(); 
+    await textProcessor.ProcessAsync(inputText, new RequestContext(), CancellationToken.None); 
+} 
+catch (MatchNotFoundException) 
+{ 
+    Console.WriteLine(&quot;Não entendi o que você quis dizer.&quot;); 
+} 
+</code></pre>
+
+<p><img src="https://andrebires.files.wordpress.com/2016/10/textc1.png" alt="textc.png" /></p>
+
+<p>No próximo post, iremos mostrar como otimizar este bot utilizando algoritmos de aproximação e o contexto da conversa. O código do Textc e deste e outros exemplos estão <a href="https://github.com/takenet/textc-csharp/tree/master/src/Takenet.Textc.Samples">no Github</a>. E você pode conversar com este bot no <a href="https://telegram.me/calendario_textc_bot">Telegram</a>.</p>
+
+  </div>
+  
+</div>
+</div>
+
+  </body>
+</html>

@@ -1,0 +1,9 @@
+theme = "hyde"
+baseURL = "http://andrebir.es"
+languageCode = "en-us"
+title = "Blog de André Bires"
+publishDir = "docs"
+
+[params]
+  description = "Aprendendo e compartilhando ideias sobre desenvolvimento de software"
+  author = "André Bires"

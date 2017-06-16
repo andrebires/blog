@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tags on Blog de André Bires</title>
+    <link>http://andrebir.es/tags/</link>
+    <description>Recent content in Tags on Blog de André Bires</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Fri, 06 Apr 2012 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="http://andrebir.es/tags/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>.Vimrc</title>
+      <link>http://andrebir.es/tags/.vimrc/</link>
+      <pubDate>Fri, 06 Apr 2012 00:00:00 +0000</pubDate>
+      
+      <guid>http://andrebir.es/tags/.vimrc/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Plugins</title>
+      <link>http://andrebir.es/tags/plugins/</link>
+      <pubDate>Fri, 06 Apr 2012 00:00:00 +0000</pubDate>
+      
+      <guid>http://andrebir.es/tags/plugins/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Spf13 Vim</title>
+      <link>http://andrebir.es/tags/spf13-vim/</link>
+      <pubDate>Fri, 06 Apr 2012 00:00:00 +0000</pubDate>
+      
+      <guid>http://andrebir.es/tags/spf13-vim/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Vim</title>
+      <link>http://andrebir.es/tags/vim/</link>
+      <pubDate>Fri, 06 Apr 2012 00:00:00 +0000</pubDate>
+      
+      <guid>http://andrebir.es/tags/vim/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>
